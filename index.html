@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bible Project</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="bar">
+  <form id="go" autocomplete="off">
+    <input id="ref" value="Acts 12:20-25" aria-label="Passage" placeholder="e.g. John 3:16-21">
+    <select id="tr" aria-label="Translation">
+      <option value="kjv">KJV</option>
+      <option value="web">WEB</option>
+      <option value="asv">ASV</option>
+      <option value="bbe">BBE</option>
+    </select>
+    <button>Go</button>
+  </form>
+  <button id="who" class="ghost" type="button"></button>
+</header>
+
+<main class="book"><div class="spread">
+  <section class="pg left">
+    <div class="run"><span id="runL"></span><span id="runR"></span></div>
+    <h1 id="title"></h1>
+    <div class="sub" id="sub"></div>
+    <div id="text"></div>
+    <div class="hint">Tap any dotted name to open its study card →</div>
+  </section>
+  <section class="pg right">
+    <div class="run"><span>Study card</span><span id="mode" class="pill"></span></div>
+    <div id="card" class="card"><div class="empty">Select a name in the text to see who or what it is, key dates, sources and related verses.</div></div>
+    <h3>Notes <span class="pill" id="grp"></span></h3>
+    <div id="notes"></div>
+    <select id="vs" aria-label="Verse"></select>
+    <textarea id="nt" placeholder="Write a note for your study group…"></textarea>
+    <button id="add">Add note</button>
+  </section>
+</div></main>
+
+<dialog id="dlg">
+  <form method="dialog" id="settings">
+    <h2>Your study group</h2>
+    <label>Your name <input id="name" required maxlength="30"></label>
+    <label>Group code <input id="group" maxlength="40" placeholder="e.g. tuesday-night"></label>
+    <p class="pill" id="dlgNote"></p>
+    <button value="ok">Save</button>
+  </form>
+</dialog>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,101 @@
+[
+  {
+    "id": "herod-agrippa-1", "type": "Person", "name": "Herod Agrippa I",
+    "summary": "King of Judea, AD 41–44",
+    "aliases": ["Herod"], "chapters": ["Acts 12"],
+    "facts": [
+      "Grandson of Herod the Great; not the Herod of Jesus’ birth.",
+      "Executed the apostle James and imprisoned Peter earlier in this chapter (12:1–3).",
+      "Josephus also records his sudden death at Caesarea in AD 44 (Antiquities 19.8.2)."
+    ],
+    "refs": ["Acts 12:1", "Acts 12:19", "Matthew 2:1"],
+    "sources": [{"label": "Wikipedia: Herod Agrippa", "url": "https://en.wikipedia.org/wiki/Herod_Agrippa"}]
+  },
+  {
+    "id": "herod-the-great", "type": "Person", "name": "Herod the Great",
+    "summary": "King of Judea, c. 37–4 BC",
+    "aliases": ["Herod"], "chapters": ["Matthew 2"],
+    "facts": ["Ruled when Jesus was born.", "Rebuilt the Jerusalem temple.", "Father of Herod Antipas and grandfather of Agrippa I."],
+    "refs": ["Matthew 2:1", "Luke 1:5"],
+    "sources": [{"label": "Wikipedia: Herod the Great", "url": "https://en.wikipedia.org/wiki/Herod_the_Great"}]
+  },
+  {
+    "id": "tyre", "type": "Place", "name": "Tyre",
+    "summary": "Phoenician port city, modern Lebanon",
+    "aliases": ["Tyre"], "global": true,
+    "facts": ["Wealthy coastal trading city north of Galilee.", "Depended on Galilean and Judean grain and food (Acts 12:20)."],
+    "refs": ["Mark 7:24", "Acts 21:3"],
+    "sources": [{"label": "Wikipedia: Tyre, Lebanon", "url": "https://en.wikipedia.org/wiki/Tyre,_Lebanon"}]
+  },
+  {
+    "id": "sidon", "type": "Place", "name": "Sidon",
+    "summary": "Phoenician port city, north of Tyre",
+    "aliases": ["Sidon"], "global": true,
+    "facts": ["Paired with Tyre in the Bible as neighboring coastal cities."],
+    "refs": ["Matthew 11:21", "Luke 6:17"],
+    "sources": [{"label": "Wikipedia: Sidon", "url": "https://en.wikipedia.org/wiki/Sidon"}]
+  },
+  {
+    "id": "blastus", "type": "Person", "name": "Blastus",
+    "summary": "Royal chamberlain of Herod",
+    "aliases": ["Blastus"], "global": true,
+    "facts": ["Mentioned only here in the Bible.", "Official in charge of the king’s bedchamber, so he had the king’s ear."],
+    "refs": ["Acts 12:20"], "sources": []
+  },
+  {
+    "id": "angel-of-the-lord", "type": "Being", "name": "Angel of the Lord",
+    "summary": "Divine messenger",
+    "aliases": ["angel of the Lord", "angel of the LORD"], "global": true,
+    "facts": ["Same phrase used for Peter’s rescue earlier in Acts 12 (12:7).", "In 12:23 the angel brings judgment rather than deliverance."],
+    "refs": ["Acts 12:7", "Acts 12:23"],
+    "sources": [{"label": "Wikipedia: Angel of the Lord", "url": "https://en.wikipedia.org/wiki/Angel_of_the_Lord"}]
+  },
+  {
+    "id": "barnabas", "type": "Person", "name": "Barnabas",
+    "summary": "Early church leader from Cyprus",
+    "aliases": ["Barnabas"], "global": true,
+    "facts": ["Name means “son of encouragement.”", "Traveling companion of Saul on the first missionary journey.", "Cousin of John Mark (Colossians 4:10)."],
+    "refs": ["Acts 4:36", "Acts 11:22–26"],
+    "sources": [{"label": "Wikipedia: Barnabas", "url": "https://en.wikipedia.org/wiki/Barnabas"}]
+  },
+  {
+    "id": "paul", "type": "Person", "name": "Saul (Paul)",
+    "summary": "Apostle to the Gentiles",
+    "aliases": ["Saul", "Paul"], "global": true,
+    "facts": ["Jewish name Saul; Roman name Paul, used from Acts 13:9.", "Had come to Jerusalem with Barnabas to bring famine relief (Acts 11:30)."],
+    "refs": ["Acts 9", "Acts 11:30", "Acts 13:9"],
+    "sources": [{"label": "Wikipedia: Paul the Apostle", "url": "https://en.wikipedia.org/wiki/Paul_the_Apostle"}]
+  },
+  {
+    "id": "jerusalem", "type": "Place", "name": "Jerusalem",
+    "summary": "Capital of Judea and center of the early church",
+    "aliases": ["Jerusalem"], "global": true,
+    "facts": ["Home base of the apostles in Acts.", "Site of Herod’s persecution in Acts 12."],
+    "refs": ["Acts 1:8", "Acts 12:1"],
+    "sources": [{"label": "Wikipedia: Jerusalem", "url": "https://en.wikipedia.org/wiki/Jerusalem"}]
+  },
+  {
+    "id": "john-mark", "type": "Person", "name": "John Mark",
+    "summary": "Companion of Barnabas and Paul",
+    "aliases": ["John, whose surname was Mark", "John Mark"], "chapters": ["Acts 12", "Acts 13", "Acts 15"],
+    "facts": ["Traditionally the author of the Gospel of Mark.", "His mother Mary hosted the church prayer meeting (12:12).", "Left the mission, later restored (Acts 15:37–39; 2 Timothy 4:11)."],
+    "refs": ["Acts 12:12", "Acts 13:13", "Colossians 4:10"],
+    "sources": [{"label": "Wikipedia: Mark the Evangelist", "url": "https://en.wikipedia.org/wiki/Mark_the_Evangelist"}]
+  },
+  {
+    "id": "peter", "type": "Person", "name": "Peter",
+    "summary": "Apostle; leader of the Jerusalem church",
+    "aliases": ["Peter", "Simon Peter", "Cephas"], "global": true,
+    "facts": ["Also called Simon and Cephas.", "Imprisoned by Herod Agrippa I and freed by an angel (Acts 12:3–11)."],
+    "refs": ["Matthew 16:18", "Acts 12:3–11"],
+    "sources": [{"label": "Wikipedia: Saint Peter", "url": "https://en.wikipedia.org/wiki/Saint_Peter"}]
+  },
+  {
+    "id": "caesarea", "type": "Place", "name": "Caesarea",
+    "summary": "Roman port and provincial capital on the Mediterranean coast",
+    "aliases": ["Caesarea"], "global": true,
+    "facts": ["Built by Herod the Great and named for Caesar Augustus.", "Where Agrippa I died in AD 44 (Acts 12:19–23)."],
+    "refs": ["Acts 10", "Acts 12:19"],
+    "sources": [{"label": "Wikipedia: Caesarea Maritima", "url": "https://en.wikipedia.org/wiki/Caesarea_Maritima"}]
+  }
+]

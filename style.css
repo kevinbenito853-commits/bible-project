@@ -1,0 +1,45 @@
+:root{--desk:#3b2a1e;--cover:#5a2d1a;--page:#f6ecd2;--page2:#efe2c0;--ink:#2b2118;--muted:#7a6a55;--gold:#9c6b12;--card:#fffaf0;--line:#d8c79d}
+@media (prefers-color-scheme:dark){:root{--desk:#15100c;--cover:#3a1c10;--page:#2a2218;--page2:#241d14;--ink:#eadfc6;--muted:#a89a80;--gold:#e0b050;--card:#33291c;--line:#4a3d29}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--desk);color:var(--ink);font-family:Georgia,'Times New Roman',serif;padding:14px;padding-bottom:env(safe-area-inset-bottom,14px)}
+.bar{max-width:980px;margin:0 auto 12px;display:flex;gap:10px;justify-content:space-between;flex-wrap:wrap}
+#go{display:flex;gap:6px;flex:1;min-width:260px}
+#go input{flex:1;min-width:0}
+.bar input,.bar select{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:8px;font:inherit;color:var(--ink)}
+.ghost{background:transparent;color:#eadfc6;border:1px solid #8a7660}
+.book{max-width:980px;margin:0 auto;background:var(--cover);border-radius:10px;padding:12px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.spread{display:grid;grid-template-columns:1fr 1fr;border-radius:4px;overflow:hidden;position:relative}
+.pg{padding:22px 26px 28px;min-height:560px}
+.left{background:linear-gradient(90deg,var(--page),var(--page2));border-right:1px solid var(--line)}
+.right{background:linear-gradient(270deg,var(--page),var(--page2))}
+.spread:after{content:"";position:absolute;left:50%;top:0;bottom:0;width:30px;margin-left:-15px;background:linear-gradient(90deg,transparent,rgba(0,0,0,.18),transparent);pointer-events:none}
+.run{display:flex;justify-content:space-between;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:14px}
+h1{font-size:28px;margin:6px 0 2px;text-align:center;font-weight:normal;letter-spacing:.04em}
+.sub{text-align:center;color:var(--muted);font-style:italic;margin-bottom:16px;font-size:14px}
+.v{font-size:19px;line-height:1.7;margin:0 0 6px}
+.v sup{color:var(--gold);font-weight:bold;font-size:12px;margin-right:3px}
+.e{border-bottom:2px dotted var(--gold);cursor:pointer;padding:0 1px;border-radius:2px}
+.e:hover,.e.on{background:rgba(156,107,18,.22)}
+.hint{font-size:12px;color:var(--muted);margin-top:14px;font-style:italic}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px 16px}
+.tag{display:inline-block;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);border:1px solid var(--gold);border-radius:10px;padding:1px 8px;margin-bottom:6px}
+.card h2{margin:0 0 4px;font-size:22px;font-weight:normal}
+.card p{margin:6px 0;font-size:15px;line-height:1.5}
+.facts{margin:8px 0 0;padding-left:18px;font-size:14px;line-height:1.5}
+.refs{margin-top:8px;font-size:13px;color:var(--muted)}
+.refs a{color:var(--gold)}
+.empty{color:var(--muted);font-style:italic;text-align:center;padding:18px 8px}
+h3{font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:20px 0 8px;font-weight:normal}
+select,textarea,button,input{font:inherit;font-size:15px;color:var(--ink)}
+.right select,textarea{width:100%;background:var(--card);border:1px solid var(--line);border-radius:6px;padding:8px}
+textarea{min-height:64px;resize:vertical;margin-top:6px}
+button{background:var(--gold);color:#fff;border:0;border-radius:6px;padding:7px 14px;cursor:pointer}
+.right button{margin-top:6px}
+.note{background:var(--card);border-left:3px solid var(--gold);border-radius:4px;padding:8px 10px;margin:8px 0;font-size:14px;white-space:pre-wrap}
+.note b{font-size:12px;color:var(--muted);display:block;margin-bottom:2px}
+.note .del{float:right;background:none;color:var(--muted);padding:0 4px;margin:0}
+.pill{font-size:12px;color:var(--muted);text-transform:none;letter-spacing:0}
+dialog{background:var(--page);color:var(--ink);border:1px solid var(--line);border-radius:10px;max-width:380px}
+dialog label{display:block;margin:10px 0}
+dialog input{width:100%;background:var(--card);border:1px solid var(--line);border-radius:6px;padding:8px;margin-top:4px}
+@media(max-width:720px){.spread{grid-template-columns:1fr}.spread:after{display:none}.left{border-right:0;border-bottom:1px solid var(--line)}.pg{padding:18px;min-height:0}}

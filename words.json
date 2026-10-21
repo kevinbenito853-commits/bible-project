@@ -1,0 +1,111 @@
+[
+  {
+    "id": "w-displeased", "word": "highly displeased", "language": "Greek",
+    "original": "θυμομαχέω", "translit": "thymomacheō", "strongs": "G2371",
+    "aliases": ["highly displeased", "displeased"], "chapters": ["Acts 12"],
+    "meaning": "Much stronger than “annoyed.” The Greek verb pictures someone furiously angry, in a fighting mood.",
+    "facts": [
+      "Used only here in the New Testament.",
+      "Built from thymos (anger, passion) and machomai (to fight), so it describes being fighting mad.",
+      "Tyre and Sidon depended on the king’s land for food, so his anger put them at real risk (v. 20)."
+    ],
+    "refs": ["Acts 12:20"],
+    "sources": [{"label": "Strong’s G2371 (Biblehub)", "url": "https://biblehub.com/greek/2371.htm"}]
+  },
+  {
+    "id": "w-chamberlain", "word": "chamberlain", "language": "Greek",
+    "original": "ἐπὶ τοῦ κοιτῶνος", "translit": "epi tou koitōnos", "strongs": "G2846",
+    "aliases": ["chamberlain"], "chapters": ["Acts 12"],
+    "meaning": "A trusted servant in charge of the king’s bedroom.",
+    "facts": [
+      "Literally “the one over the king’s bedchamber.”",
+      "Someone in that role would likely have had the king’s ear, which fits why the delegation won him over first."
+    ],
+    "refs": ["Acts 12:20"],
+    "sources": [{"label": "Strong’s G2846 (Biblehub)", "url": "https://biblehub.com/greek/2846.htm"}]
+  },
+  {
+    "id": "w-one-accord", "word": "with one accord", "language": "Greek",
+    "original": "ὁμοθυμαδόν", "translit": "homothymadon", "strongs": "G3661",
+    "aliases": ["with one accord"], "chapters": ["Acts 12"],
+    "meaning": "Together, with one mind and one purpose.",
+    "facts": [
+      "Used mostly in Acts, often for believers acting together, as in prayer.",
+      "Here it describes the Tyre and Sidon delegation coming to the king as a united group."
+    ],
+    "refs": ["Acts 1:14", "Acts 2:46"],
+    "sources": [{"label": "Strong’s G3661 (Biblehub)", "url": "https://biblehub.com/greek/3661.htm"}]
+  },
+  {
+    "id": "w-nourished", "word": "nourished", "language": "Greek",
+    "original": "τρέφω", "translit": "trephō", "strongs": "G5142",
+    "aliases": ["nourished"], "chapters": ["Acts 12"],
+    "meaning": "To feed or supply with food. Tyre and Sidon’s land got its food from the king’s territory.",
+    "facts": [
+      "These were coastal trading cities with limited farmland, so they imported grain and oil.",
+      "Tyre buying food from Israel goes back centuries (1 Kings 5:11; Ezekiel 27:17)."
+    ],
+    "refs": ["Acts 12:20", "1 Kings 5:11", "Ezekiel 27:17"],
+    "sources": [{"label": "Strong’s G5142 (Biblehub)", "url": "https://biblehub.com/greek/5142.htm"}]
+  },
+  {
+    "id": "w-oration", "word": "oration", "language": "Greek",
+    "original": "δημηγορέω", "translit": "dēmēgoreō", "strongs": "G1215",
+    "aliases": ["oration"], "chapters": ["Acts 12"],
+    "meaning": "To give a public speech to a crowd.",
+    "facts": [
+      "Used only here in the New Testament.",
+      "The Jewish historian Josephus tells a parallel account of this day at Caesarea."
+    ],
+    "refs": ["Acts 12:21"],
+    "sources": [{"label": "Strong’s G1215 (Biblehub)", "url": "https://biblehub.com/greek/1215.htm"}]
+  },
+  {
+    "id": "w-smote", "word": "smote", "language": "Greek",
+    "original": "πατάσσω", "translit": "patassō", "strongs": "G3960",
+    "aliases": ["smote"], "chapters": ["Acts 12"],
+    "meaning": "Struck or hit. “Smote” is just old English for “struck.”",
+    "facts": [
+      "The same verb is used in Acts 12:7, where an angel strikes Peter’s side to wake him.",
+      "Same word, opposite results: one strike frees Peter, the other brings judgment on Herod."
+    ],
+    "refs": ["Acts 12:7", "Acts 12:23"],
+    "sources": [{"label": "Strong’s G3960 (Biblehub)", "url": "https://biblehub.com/greek/3960.htm"}]
+  },
+  {
+    "id": "w-eaten-of-worms", "word": "eaten of worms", "language": "Greek",
+    "original": "σκωληκόβρωτος", "translit": "skōlēkobrōtos", "strongs": "G4662",
+    "aliases": ["eaten of worms"], "chapters": ["Acts 12"],
+    "meaning": "Eaten by worms, a grisly and painful way to die.",
+    "facts": [
+      "Used only here in the New Testament.",
+      "Josephus also describes Agrippa suffering severe stomach pain and dying within a few days."
+    ],
+    "refs": ["Acts 12:23"],
+    "sources": [{"label": "Strong’s G4662 (Biblehub)", "url": "https://biblehub.com/greek/4662.htm"}]
+  },
+  {
+    "id": "w-gave-up-the-ghost", "word": "gave up the ghost", "language": "Greek",
+    "original": "ἐκψύχω", "translit": "ekpsychō", "strongs": "G1634",
+    "aliases": ["gave up the ghost"], "chapters": ["Acts 12"],
+    "meaning": "Breathed his last breath; died.",
+    "facts": [
+      "In older English, “ghost” means spirit or breath, so this simply means he died.",
+      "The same verb is used for Ananias and Sapphira (Acts 5:5, 5:10), also after judgment."
+    ],
+    "refs": ["Acts 5:5", "Acts 5:10", "Acts 12:23"],
+    "sources": [{"label": "Strong’s G1634 (Biblehub)", "url": "https://biblehub.com/greek/1634.htm"}]
+  },
+  {
+    "id": "w-ministry", "word": "ministry", "language": "Greek",
+    "original": "διακονία", "translit": "diakonia", "strongs": "G1248",
+    "aliases": ["ministry"], "chapters": ["Acts 12"],
+    "meaning": "Service, especially practical help. Not a church office here.",
+    "facts": [
+      "Here it refers to the famine relief Barnabas and Saul brought to Jerusalem (Acts 11:29–30).",
+      "It is the root of the word “deacon.”"
+    ],
+    "refs": ["Acts 11:29–30", "Acts 12:25"],
+    "sources": [{"label": "Strong’s G1248 (Biblehub)", "url": "https://biblehub.com/greek/1248.htm"}]
+  }
+]

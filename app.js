@@ -73,13 +73,14 @@ async function loadPassage(ref, tr) {
     const res = await fetch(`https://bible-api.com/${encodeURIComponent(ref)}?translation=${tr}`);
     if (!res.ok) throw new Error("Passage not found. Try something like “John 3:16-21” or “Psalm 23”.");
     const data = await res.json();
-    if (myId !== state.loadId) return; // a newer lookup started; ignore this one
+    if (myId !== state.loadId) return null; // a newer lookup started; ignore this one
     if (!data.verses?.length) throw new Error("Passage not found. Try something like “John 3:16-21” or “Psalm 23”.");
     state.verses = data.verses;
     state.book = data.verses[0].book_name;
     state.bookId = data.verses[0].book_id;
     $("commWrap").hidden = true;
     state.reference = data.reference;
+    state.tr = tr;
     state.chapters = [...new Set(data.verses.map((v) => v.chapter))];
     $("title").textContent = data.reference;
     $("sub").textContent = data.translation_name;
@@ -88,9 +89,11 @@ async function loadPassage(ref, tr) {
     render();
     fillVerseSelect();
     refreshNotes();
+    return true;
   } catch (e) {
-    if (myId !== state.loadId) return;
+    if (myId !== state.loadId) return null;
     $("text").innerHTML = `<div class="empty">${esc(e.message)}</div>`;
+    return false;
   }
 }
 
@@ -133,6 +136,7 @@ function render() {
     const body = markup(v.text.replace(/\s+/g, " ").trim(), re, lookup);
     return `<div class="vw" data-cv="${cv}"><p class="v" data-ch="${v.chapter}" data-v="${v.verse}"><sup><button type="button" class="vn" data-cv="${cv}" title="Add a note or question on this verse">${multi ? cv : v.verse}</button></sup>${body}<button type="button" class="vb" data-cv="${cv}" hidden></button></p><div class="slot"></div></div>`;
   }).join("");
+  applyHighlights();
 }
 
 /* ---------- inline study cards (open right under the verse) ---------- */
@@ -166,6 +170,20 @@ async function commentaryChapter(id, book, chapter) {
   try { return await commCache.get(key); } catch (e) { commCache.delete(key); throw e; }
 }
 
+// Verse text without the number button, so offsets stay the same however the verse is marked up.
+function plainText(el) {
+  el.querySelectorAll("sup, .vb, .slot").forEach((x) => x.remove());
+  return el.textContent;
+}
+function plainOffset(p, node, offset) {
+  const r = document.createRange();
+  r.selectNodeContents(p);
+  r.setEnd(node, offset);
+  const box = document.createElement("div");
+  box.appendChild(r.cloneContents());
+  return plainText(box).length;
+}
+
 // What the reader has selected: the text (without verse numbers) and which verses it touches.
 function readSelection() {
   const sel = window.getSelection();
@@ -180,11 +198,21 @@ function readSelection() {
   const text = box.textContent.replace(/\s+/g, " ").trim();
   if (!text) return null;
   const all = [...$("text").querySelectorAll(".v")];
-  const picked = all.slice(all.indexOf(a), all.indexOf(b) + 1).map((p) => ({ chapter: +p.dataset.ch, verse: +p.dataset.v }));
+  const paras = all.slice(all.indexOf(a), all.indexOf(b) + 1);
+  const picked = paras.map((p) => ({ chapter: +p.dataset.ch, verse: +p.dataset.v }));
   const f = picked[0], l = picked.at(-1);
   const same = f.chapter === l.chapter;
   const label = `${state.book} ${f.chapter}:${f.verse}` + (picked.length > 1 ? `–${same ? "" : l.chapter + ":"}${l.verse}` : "");
-  return { text, picked, label, rect: range.getBoundingClientRect() };
+  const segs = paras.map((p, i) => {
+    const pt = plainText(p.cloneNode(true));
+    let s = i === 0 ? plainOffset(p, range.startContainer, range.startOffset) : 0;
+    let e = i === paras.length - 1 ? plainOffset(p, range.endContainer, range.endOffset) : pt.length;
+    while (s < e && /\s/.test(pt[s])) s++;
+    while (e > s && /\s/.test(pt[e - 1])) e--;
+    return { chapter: picked[i].chapter, verse: picked[i].verse, s, e, text: pt.slice(s, e) };
+  }).filter((x) => x.e > x.s);
+  const ref = `${state.book} ${f.chapter}:${f.verse}` + (picked.length > 1 ? `-${same ? "" : l.chapter + ":"}${l.verse}` : "");
+  return { text, picked, label, ref, segs, rect: range.getBoundingClientRect() };
 }
 
 let current = null;
@@ -197,6 +225,111 @@ function updatePop() {
   const x = Math.min(Math.max(s.rect.left + s.rect.width / 2, w / 2 + 6), window.innerWidth - w / 2 - 6);
   $("pop").style.left = x + "px";
   $("pop").style.top = Math.max(6, s.rect.top - $("pop").offsetHeight - 8) + "px";
+}
+
+/* ---------- highlights (saved in this browser) ---------- */
+
+function loadHl() { try { return JSON.parse(load("highlights", "[]")); } catch { return []; } }
+function saveHl(list) { save("highlights", JSON.stringify(list)); updateHBtn(); }
+
+function highlightCurrent() {
+  if (!current?.segs.length) return;
+  const list = loadHl();
+  list.push({
+    id: crypto.randomUUID(), tr: state.tr, book: state.book, ref: current.ref, label: current.label, created: Date.now(),
+    text: current.segs.map((s) => s.text).join(" … "),
+    segs: current.segs.map(({ chapter, verse, s, e }) => ({ chapter, verse, s, e })),
+  });
+  saveHl(list);
+  window.getSelection().removeAllRanges();
+  $("pop").hidden = true;
+  applyHighlights();
+}
+
+function wrapRange(p, s, e, id) {
+  const walker = document.createTreeWalker(p, NodeFilter.SHOW_TEXT, {
+    acceptNode: (n) => (n.parentElement.closest("sup, .vb, .slot") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT),
+  });
+  const nodes = [];
+  for (let n; (n = walker.nextNode());) nodes.push(n);
+  let pos = 0;
+  for (const n of nodes) {
+    const len = n.length, a = Math.max(s - pos, 0), b = Math.min(e - pos, len);
+    if (b > a) {
+      const mid = a > 0 ? n.splitText(a) : n;
+      if (b - a < mid.length) mid.splitText(b - a);
+      const mk = document.createElement("mark");
+      mk.className = "hl"; mk.dataset.id = id;
+      mid.replaceWith(mk);
+      mk.appendChild(mid);
+    }
+    pos += len;
+  }
+}
+
+function applyHighlights() {
+  document.querySelectorAll("#text mark.hl").forEach((m) => m.replaceWith(...m.childNodes));
+  $("text").normalize();
+  for (const h of loadHl()) {
+    if (h.tr !== state.tr || h.book !== state.book) continue;
+    for (const sg of h.segs) {
+      const p = document.querySelector(`#text .v[data-ch="${sg.chapter}"][data-v="${sg.verse}"]`);
+      if (p) wrapRange(p, sg.s, sg.e, h.id);
+    }
+  }
+}
+
+function updateHBtn() {
+  const n = loadHl().length;
+  $("hcount").textContent = n;
+  $("hcount").hidden = !n;
+}
+
+function showHighlights() {
+  const list = loadHl().sort((a, b) => b.created - a.created);
+  $("hlist").innerHTML = list.length
+    ? list.map((h) => `<div class="hi"><button type="button" class="hx" data-rm="${esc(h.id)}" title="Remove highlight" aria-label="Remove highlight">✕</button>` +
+      `<a href="#" data-go="${esc(h.id)}"><b>${esc(h.label)}</b> <small>${esc(String(h.tr).toUpperCase())}</small></a><div class="ht">${esc(h.text)}</div></div>`).join("")
+    : '<div class="empty">Nothing highlighted yet. Select some text and tap Highlight.</div>';
+  if (!$("hdlg").open) $("hdlg").showModal();
+}
+
+async function gotoHighlight(id) {
+  const h = loadHl().find((x) => x.id === id);
+  if (!h) return;
+  $("hdlg").close();
+  $("tr").value = h.tr;
+  $("ref").value = h.ref;
+  await loadPassage(h.ref, h.tr);
+  const marks = document.querySelectorAll(`#text mark[data-id="${id}"]`);
+  marks[0]?.scrollIntoView({ block: "center", behavior: "smooth" });
+  marks.forEach((m) => m.classList.add("flash"));
+  setTimeout(() => marks.forEach((m) => m.classList.remove("flash")), 1800);
+}
+
+/* ---------- next / previous chapter ---------- */
+
+function toast(msg) {
+  $("toast").textContent = msg;
+  $("toast").hidden = false;
+  clearTimeout(toast.t);
+  toast.t = setTimeout(() => ($("toast").hidden = true), 2200);
+}
+
+async function turnChapter(delta) {
+  if (!state.chapters.length || state.turning) return;
+  const target = delta > 0 ? state.chapters.at(-1) + 1 : state.chapters[0] - 1;
+  if (target < 1) return toast("That's the first chapter.");
+  state.turning = true;
+  const prev = state.reference;
+  $("ref").value = `${state.book} ${target}`;
+  const ok = await loadPassage($("ref").value, state.tr);
+  if (ok === false) {
+    await loadPassage(prev, state.tr);
+    $("ref").value = prev;
+    toast(delta > 0 ? "That's the last chapter." : "That's the first chapter.");
+  } else if (ok) window.scrollTo(0, 0);
+  state.turning = false;
 }
 
 async function copyCurrent() {
@@ -514,6 +647,39 @@ document.addEventListener("selectionchange", () => { clearTimeout(updatePop.t); 
 document.addEventListener("scroll", () => { $("pop").hidden = true; }, { passive: true });
 // keep the selection alive when the buttons are pressed
 $("pop").addEventListener("mousedown", (e) => e.preventDefault());
+$("popHl").addEventListener("click", highlightCurrent);
+$("hbtn").addEventListener("click", showHighlights);
+$("hdlg").addEventListener("click", (e) => {
+  const go = e.target.closest("[data-go]"), rm = e.target.closest("[data-rm]");
+  if (go) { e.preventDefault(); gotoHighlight(go.dataset.go); }
+  else if (rm && confirm("Remove this highlight?")) { saveHl(loadHl().filter((h) => h.id !== rm.dataset.rm)); applyHighlights(); showHighlights(); }
+  else if (e.target === $("hdlg")) $("hdlg").close();
+});
+$("prevCh").addEventListener("click", () => turnChapter(-1));
+$("nextCh").addEventListener("click", () => turnChapter(1));
+document.addEventListener("keydown", (e) => {
+  if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || document.body.classList.contains("reporting")) return;
+  if (e.target.closest?.("input, textarea, select, dialog, button")) return;
+  if (e.key === "ArrowRight") turnChapter(1);
+  else if (e.key === "ArrowLeft") turnChapter(-1);
+});
+// swipe left / right on the passage to turn the chapter
+let swipe = null;
+const leftPage = document.querySelector(".pg.left");
+leftPage.addEventListener("touchstart", (e) => {
+  const t = e.touches[0];
+  swipe = e.touches.length === 1 ? { x: t.clientX, y: t.clientY, at: Date.now() } : null;
+}, { passive: true });
+leftPage.addEventListener("touchend", (e) => {
+  const s = swipe;
+  swipe = null;
+  if (!s) return;
+  const sel = window.getSelection();
+  if (sel && !sel.isCollapsed) return;
+  const t = e.changedTouches[0], dx = t.clientX - s.x, dy = t.clientY - s.y;
+  if (Date.now() - s.at > 800 || Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 1.8) return;
+  turnChapter(dx < 0 ? 1 : -1);
+}, { passive: true });
 $("popComm").addEventListener("click", () => { showCommentary(); $("pop").hidden = true; });
 $("popCopy").addEventListener("click", copyCurrent);
 $("copyQ").addEventListener("click", copyCurrent);
@@ -614,6 +780,8 @@ $("settings").addEventListener("submit", () => {
 });
 
 const getJSON = (url) => fetch(url).then((r) => { if (!r.ok) throw new Error(`${url}: ${r.status}`); return r.json(); }).catch((e) => { console.warn("Could not load", e); return []; });
+
+updateHBtn();
 
 (async function init() {
   [state.entities, state.words] = await Promise.all([getJSON("data/entities.json"), getJSON("data/words.json")]);

@@ -30,7 +30,8 @@
     <h1 id="title"></h1>
     <div class="sub" id="sub"></div>
     <div id="text"></div>
-    <div class="hint">Tap a <span class="e-sample">dotted name</span> or a <span class="w-sample">dashed word</span> to open it right under the verse. Tap a verse number to add a note or question. Select text to copy it or read commentary.</div>
+    <div class="turn"><button id="prevCh" type="button">‹ Previous chapter</button><button id="nextCh" type="button">Next chapter ›</button></div>
+    <div class="hint">Tap a <span class="e-sample">dotted name</span> or a <span class="w-sample">dashed word</span> to open it right under the verse. Tap a verse number to add a note or question. Select text to highlight, copy it or read commentary. Swipe left or right to change chapter.</div>
   </section>
   <section class="pg right">
     <div class="run"><span>Questions &amp; notes</span><span id="mode" class="pill"></span></div>
@@ -72,7 +73,7 @@
   </section>
 </div></main>
 
-<div id="pop" hidden><button id="popComm" type="button">Commentary</button><button id="popCopy" type="button">Copy</button></div>
+<div id="pop" hidden><button id="popHl" type="button">Highlight</button><button id="popComm" type="button">Commentary</button><button id="popCopy" type="button">Copy</button></div>
 
 <section id="report" aria-label="Study report">
   <div class="rtools">
@@ -95,6 +96,15 @@
     <ol id="rList"></ol>
   </div>
 </section>
+
+<button id="hbtn" type="button" title="Highlighted passages" aria-label="Highlighted passages">H<span id="hcount" hidden></span></button>
+<div id="toast" hidden></div>
+
+<dialog id="hdlg">
+  <h2>Highlighted passages</h2>
+  <div id="hlist"></div>
+  <form method="dialog"><button>Close</button></form>
+</dialog>
 
 <dialog id="dlg">
   <form method="dialog" id="settings">

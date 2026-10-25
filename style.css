@@ -65,6 +65,8 @@ button{background:var(--gold);color:#fff;border:0;border-radius:6px;padding:7px 
 .note .erow{display:flex;gap:6px}
 .note .erow button{margin:0}
 .note .ghost2{background:transparent;color:var(--muted);border:1px solid var(--line)}
+.cbtn{display:block;margin:8px 0 2px;background:transparent;color:var(--gold);border:1px solid var(--gold);padding:4px 12px;font-size:13px}
+.cm+.cbtn{margin-top:-2px;margin-bottom:10px}
 .note .del{float:right;background:none;color:var(--muted);padding:0 4px;margin:0}
 .pill{font-size:12px;color:var(--muted);text-transform:none;letter-spacing:0}
 dialog{background:var(--page);color:var(--ink);border:1px solid var(--line);border-radius:10px;max-width:380px}

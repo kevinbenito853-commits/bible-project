@@ -207,6 +207,43 @@ async function copyCurrent() {
   for (const b of [$("popCopy"), $("copyQ")]) { const old = b.textContent; b.textContent = "Copied ✓"; setTimeout(() => (b.textContent = old), 1200); }
 }
 
+const commCtx = [];
+
+// Open claude.ai with a ready-made prompt (also copied, in case the page ignores the link text).
+function askClaude(prompt) {
+  try { navigator.clipboard?.writeText(prompt); } catch { /* the link still carries it */ }
+  window.open(`https://claude.ai/new?q=${encodeURIComponent(prompt)}`, "_blank", "noopener");
+}
+const trName = () => $("tr").selectedOptions[0].textContent;
+
+function questionPrompt(question, ch, v) {
+  let where;
+  if (v > 0) {
+    const verse = state.verses.find((x) => x.chapter === ch && x.verse === v);
+    where = `${state.book} ${ch}:${v}${verse ? ` (${trName()}): “${verse.text.replace(/\s+/g, " ").trim()}”` : ""}`;
+  } else {
+    where = `${state.reference} (${trName()}), the passage as a whole`;
+  }
+  return `I'm studying the Bible with a small group. One of us wrote a question about ${where}
+
+Question: “${question}”
+
+` +
+    `Please do two things:
+1. Study the question itself. Does it make sense? Is it clear, fair to what the text says, and answerable from Scripture? If not, say what's off and suggest a better wording.
+` +
+    `2. Give me some ideas toward an answer: what the text says, related verses, background that matters, and where thoughtful Christians read it differently. Don't hand me one final verdict; help me think it through and check it myself.`;
+}
+
+function commentPrompt(c) {
+  return `I'm studying the Bible with a small group. We selected “${c.quote}” (${c.label}, ${trName()}) and read ${c.who} on ${c.ref}. Here is an excerpt:
+
+${c.body}${c.body.length >= 900 ? "…" : ""}
+
+` +
+    `Please study this: does the commentary actually fit what the verse says? What is it assuming, and where might other readers disagree? Then give me some questions and ideas worth discussing, with related verses, so I can check it myself.`;
+}
+
 async function showCommentary() {
   if (!current) return;
   const sel = current, id = $("commSel").value, name = $("commSel").selectedOptions[0].textContent;
@@ -215,6 +252,7 @@ async function showCommentary() {
   $("comm").innerHTML = '<div class="empty">Loading commentary…</div>';
   try {
     const out = [], seen = new Set();
+    commCtx.length = 0;
     for (const chapter of [...new Set(sel.picked.map((p) => p.chapter))]) {
       const data = await commentaryChapter(id, state.bookId, chapter);
       const entries = data.chapter.content.filter((c) => c.type === "verse").sort((x, y) => x.number - y.number);
@@ -224,7 +262,8 @@ async function showCommentary() {
         seen.add(`${chapter}:${entries[i].number}`);
         const from = entries[i].number, to = entries[i + 1] ? entries[i + 1].number - 1 : data.chapter.numberOfVerses;
         const body = entries[i].content.map((c) => (typeof c === "string" ? c : c.text || "")).join("\n").trim();
-        if (body) out.push(`<div class="cm"><b>${esc(name)} on ${esc(state.book)} ${chapter}:${from}${to > from ? "–" + to : ""}</b>${esc(body)}</div>`);
+        if (body) commCtx.push({ kind: "c", who: name, ref: `${state.book} ${chapter}:${from}${to > from ? "–" + to : ""}`, quote: sel.text, label: sel.label, body: body.slice(0, 900) });
+        if (body) out.push(`<div class="cm"><b>${esc(name)} on ${esc(state.book)} ${chapter}:${from}${to > from ? "–" + to : ""}</b>${esc(body)}</div><button type="button" class="cbtn" data-kind="c" data-i="${commCtx.length - 1}">Comments</button>`);
       }
     }
     $("comm").innerHTML = out.length ? out.join("") + `<div class="credit">Commentary text from public-domain works, served by bible.helloao.org.</div>`
@@ -278,7 +317,7 @@ function fillVerseSelect() {
 
 function noteHTML(n) {
   const q = n.kind === "question";
-  return `<div class="note${q ? " q" : ""}"><b>${q ? '<span class="qt">Question</span> ' : ""}${esc(n.author)}${n.mine ? `<button class="del" data-id="${esc(n.id)}" title="Delete" aria-label="Delete">✕</button><button class="edit" data-id="${esc(n.id)}" title="Edit" aria-label="Edit">✎</button>` : ""}</b><span class="nb">${esc(n.body)}</span></div>`;
+  return `<div class="note${q ? " q" : ""}"><b>${q ? '<span class="qt">Question</span> ' : ""}${esc(n.author)}${n.mine ? `<button class="del" data-id="${esc(n.id)}" title="Delete" aria-label="Delete">✕</button><button class="edit" data-id="${esc(n.id)}" title="Edit" aria-label="Edit">✎</button>` : ""}</b><span class="nb">${esc(n.body)}</span>${q ? `<button type="button" class="cbtn" data-kind="q" data-ch="${esc(n.chapter)}" data-v="${esc(n.verse)}">Comments</button>` : ""}</div>`;
 }
 
 async function refreshNotes() {
@@ -524,6 +563,13 @@ async function onEdit(e) {
   const ta = note.querySelector("textarea");
   ta.value = old; ta.focus();
 }
+document.addEventListener("click", (e) => {
+  const b = e.target.closest(".cbtn");
+  if (!b) return;
+  if (b.dataset.kind === "c") return askClaude(commentPrompt(commCtx[+b.dataset.i]));
+  const q = b.closest(".note").querySelector(".nb").textContent;
+  askClaude(questionPrompt(q, +b.dataset.ch, +b.dataset.v));
+});
 for (const id of ["notes", "gq"]) { $(id).addEventListener("click", onDelete); $(id).addEventListener("click", onEdit); }
 
 document.querySelectorAll('input[name="kind"]').forEach((r) => r.addEventListener("change", () => {

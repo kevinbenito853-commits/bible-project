@@ -53,6 +53,8 @@ async function loadPassage(ref, tr) {
     const data = await res.json();
     state.verses = data.verses;
     state.book = data.verses[0].book_name;
+    state.bookId = data.verses[0].book_id;
+    $("commWrap").hidden = true;
     state.chapters = [...new Set(data.verses.map((v) => v.chapter))];
     $("title").textContent = data.reference;
     $("sub").textContent = data.translation_name;
@@ -80,7 +82,7 @@ function render() {
   $("text").innerHTML = state.verses.map((v) => {
     const safe = esc(v.text.replace(/\s+/g, " ").trim());
     const body = re ? safe.replace(re, (m) => `<span class="e" data-k="${byAlias.get(m).id}">${m}</span>`) : safe;
-    return `<p class="v"><sup>${state.chapters.length > 1 ? v.chapter + ":" : ""}${v.verse}</sup>${body}</p>`;
+    return `<p class="v" data-ch="${v.chapter}" data-v="${v.verse}"><sup>${state.chapters.length > 1 ? v.chapter + ":" : ""}${v.verse}</sup>${body}</p>`;
   }).join("");
 }
 
@@ -94,6 +96,89 @@ function showCard(id) {
     `<ul class="facts">${d.facts.map((f) => `<li>${esc(f)}</li>`).join("")}</ul>` +
     (refs ? `<div class="refs">Related: ${refs}</div>` : "") +
     (src ? `<div class="refs">Check the facts: ${src}</div>` : `<div class="refs">No outside sources listed yet.</div>`);
+}
+
+/* ---------- selection, copy and commentary ---------- */
+
+const commCache = new Map();
+async function commentaryChapter(id, book, chapter) {
+  const key = `${id}/${book}/${chapter}`;
+  if (!commCache.has(key)) {
+    commCache.set(key, fetch(`https://bible.helloao.org/api/c/${id}/${book}/${chapter}.json`).then((r) => {
+      if (!r.ok) throw new Error("No commentary on this chapter from this author.");
+      return r.json();
+    }));
+  }
+  try { return await commCache.get(key); } catch (e) { commCache.delete(key); throw e; }
+}
+
+// What the reader has selected: the text (without verse numbers) and which verses it touches.
+function readSelection() {
+  const sel = window.getSelection();
+  if (!sel || sel.isCollapsed || !sel.rangeCount) return null;
+  const range = sel.getRangeAt(0);
+  const para = (n) => (n.nodeType === 1 ? n : n.parentElement)?.closest(".v");
+  const a = para(range.startContainer), b = para(range.endContainer);
+  if (!a || !b || !$("text").contains(a) || !$("text").contains(b)) return null;
+  const box = document.createElement("div");
+  box.appendChild(range.cloneContents());
+  box.querySelectorAll("sup").forEach((s) => s.remove());
+  const text = box.textContent.replace(/\s+/g, " ").trim();
+  if (!text) return null;
+  const all = [...$("text").querySelectorAll(".v")];
+  const picked = all.slice(all.indexOf(a), all.indexOf(b) + 1).map((p) => ({ chapter: +p.dataset.ch, verse: +p.dataset.v }));
+  const f = picked[0], l = picked.at(-1);
+  const same = f.chapter === l.chapter;
+  const label = `${state.book} ${f.chapter}:${f.verse}` + (picked.length > 1 ? `–${same ? "" : l.chapter + ":"}${l.verse}` : "");
+  return { text, picked, label, rect: range.getBoundingClientRect() };
+}
+
+let current = null;
+function updatePop() {
+  const s = readSelection();
+  if (!s) { $("pop").hidden = true; return; }
+  current = s;
+  $("pop").hidden = false;
+  const w = $("pop").offsetWidth;
+  const x = Math.min(Math.max(s.rect.left + s.rect.width / 2, w / 2 + 6), window.innerWidth - w / 2 - 6);
+  $("pop").style.left = x + "px";
+  $("pop").style.top = Math.max(6, s.rect.top - $("pop").offsetHeight - 8) + "px";
+}
+
+async function copyCurrent() {
+  if (!current) return;
+  const out = `“${current.text}” — ${current.label} (${$("tr").value.toUpperCase()})`;
+  try { await navigator.clipboard.writeText(out); }
+  catch { const t = document.createElement("textarea"); t.value = out; document.body.appendChild(t); t.select(); document.execCommand("copy"); t.remove(); }
+  for (const b of [$("popCopy"), $("copyQ")]) { const old = b.textContent; b.textContent = "Copied ✓"; setTimeout(() => (b.textContent = old), 1200); }
+}
+
+async function showCommentary() {
+  if (!current) return;
+  const sel = current, id = $("commSel").value, name = $("commSel").selectedOptions[0].textContent;
+  $("commWrap").hidden = false;
+  $("quote").innerHTML = `“${esc(sel.text)}”<small>${esc(sel.label)} · ${esc($("tr").value.toUpperCase())}</small>`;
+  $("comm").innerHTML = '<div class="empty">Loading commentary…</div>';
+  try {
+    const out = [], seen = new Set();
+    for (const chapter of [...new Set(sel.picked.map((p) => p.chapter))]) {
+      const data = await commentaryChapter(id, state.bookId, chapter);
+      const entries = data.chapter.content.filter((c) => c.type === "verse").sort((x, y) => x.number - y.number);
+      for (const p of sel.picked.filter((q) => q.chapter === chapter)) {
+        const i = entries.findLastIndex((e) => e.number <= p.verse);
+        if (i < 0 || seen.has(`${chapter}:${entries[i].number}`)) continue;
+        seen.add(`${chapter}:${entries[i].number}`);
+        const from = entries[i].number, to = entries[i + 1] ? entries[i + 1].number - 1 : data.chapter.numberOfVerses;
+        const body = entries[i].content.map((c) => (typeof c === "string" ? c : c.text || "")).join("\n").trim();
+        if (body) out.push(`<div class="cm"><b>${esc(name)} on ${esc(state.book)} ${chapter}:${from}${to > from ? "–" + to : ""}</b>${esc(body)}</div>`);
+      }
+    }
+    $("comm").innerHTML = out.length ? out.join("") + `<div class="credit">Commentary text from public-domain works, served by bible.helloao.org.</div>`
+      : `<div class="empty">${esc(name)} has nothing on this verse. Try another commentary.</div>`;
+  } catch (e) {
+    $("comm").innerHTML = `<div class="empty">${esc(e.message)} Try another commentary.</div>`;
+  }
+  $("commWrap").scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
 /* ---------- notes UI ---------- */
@@ -131,6 +216,14 @@ $("card").addEventListener("click", (e) => {
   $("ref").value = a.dataset.ref;
   loadPassage(a.dataset.ref, $("tr").value);
 });
+document.addEventListener("selectionchange", () => { clearTimeout(updatePop.t); updatePop.t = setTimeout(updatePop, 150); });
+document.addEventListener("scroll", () => { $("pop").hidden = true; }, { passive: true });
+// keep the selection alive when the buttons are pressed
+$("pop").addEventListener("mousedown", (e) => e.preventDefault());
+$("popComm").addEventListener("click", () => { showCommentary(); $("pop").hidden = true; });
+$("popCopy").addEventListener("click", copyCurrent);
+$("copyQ").addEventListener("click", copyCurrent);
+$("commSel").addEventListener("change", showCommentary);
 $("notes").addEventListener("click", async (e) => {
   const b = e.target.closest(".del");
   if (b && confirm("Delete this note?")) { await state.store.remove(b.dataset.id); refreshNotes(); }

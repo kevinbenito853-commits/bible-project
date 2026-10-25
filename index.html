@@ -27,11 +27,28 @@
     <h1 id="title"></h1>
     <div class="sub" id="sub"></div>
     <div id="text"></div>
-    <div class="hint">Tap any dotted name to open its study card →</div>
+    <div class="hint">Tap any dotted name to open its study card. Select a verse or part of one to copy it or read commentary.</div>
   </section>
   <section class="pg right">
     <div class="run"><span>Study card</span><span id="mode" class="pill"></span></div>
     <div id="card" class="card"><div class="empty">Select a name in the text to see who or what it is, key dates, sources and related verses.</div></div>
+    <div id="commWrap" hidden>
+      <h3>Commentary</h3>
+      <div id="quote" class="quote"></div>
+      <div class="commbar">
+        <select id="commSel" aria-label="Commentary">
+          <option value="matthew-henry">Matthew Henry</option>
+          <option value="jamieson-fausset-brown">Jamieson-Fausset-Brown</option>
+          <option value="john-gill">John Gill</option>
+          <option value="adam-clarke">Adam Clarke</option>
+          <option value="john-calvin">John Calvin</option>
+          <option value="tyndale">Tyndale Study Notes</option>
+          <option value="keil-delitzsch">Keil &amp; Delitzsch (OT)</option>
+        </select>
+        <button id="copyQ" type="button">Copy</button>
+      </div>
+      <div id="comm"></div>
+    </div>
     <h3>Notes <span class="pill" id="grp"></span></h3>
     <div id="notes"></div>
     <select id="vs" aria-label="Verse"></select>
@@ -39,6 +56,8 @@
     <button id="add">Add note</button>
   </section>
 </div></main>
+
+<div id="pop" hidden><button id="popComm" type="button">Commentary</button><button id="popCopy" type="button">Copy</button></div>
 
 <dialog id="dlg">
   <form method="dialog" id="settings">

@@ -42,4 +42,15 @@ button{background:var(--gold);color:#fff;border:0;border-radius:6px;padding:7px 
 dialog{background:var(--page);color:var(--ink);border:1px solid var(--line);border-radius:10px;max-width:380px}
 dialog label{display:block;margin:10px 0}
 dialog input{width:100%;background:var(--card);border:1px solid var(--line);border-radius:6px;padding:8px;margin-top:4px}
+[hidden]{display:none!important}
+#pop{position:fixed;z-index:10;display:flex;gap:4px;background:var(--card);border:1px solid var(--gold);border-radius:8px;padding:4px;box-shadow:0 4px 14px rgba(0,0,0,.4);transform:translateX(-50%)}
+#pop button{margin:0;padding:6px 12px}
+.quote{background:var(--card);border-left:3px solid var(--gold);border-radius:4px;padding:8px 10px;font-style:italic;font-size:15px;line-height:1.5}
+.quote small{display:block;font-style:normal;color:var(--muted);font-size:12px;margin-top:4px}
+.commbar{display:flex;gap:6px;margin:8px 0}
+.commbar select{flex:1}
+.commbar button{margin:0}
+.cm{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:10px 12px;margin:8px 0;font-size:14px;line-height:1.55;white-space:pre-wrap;max-height:340px;overflow:auto}
+.cm b{display:block;font-size:12px;color:var(--muted);margin-bottom:4px;white-space:normal}
+.credit{font-size:12px;color:var(--muted)}
 @media(max-width:720px){.spread{grid-template-columns:1fr}.spread:after{display:none}.left{border-right:0;border-bottom:1px solid var(--line)}.pg{padding:18px;min-height:0}}

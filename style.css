@@ -60,6 +60,11 @@ button{background:var(--gold);color:#fff;border:0;border-radius:6px;padding:7px 
 .composer{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
 .kinds{display:flex;gap:16px;margin:8px 0 0;font-size:14px}
 .kinds input{margin-right:4px}
+.note .edit{float:right;background:none;color:var(--muted);padding:0 4px;margin:0}
+.note .eta{width:100%;min-height:60px;margin:4px 0}
+.note .erow{display:flex;gap:6px}
+.note .erow button{margin:0}
+.note .ghost2{background:transparent;color:var(--muted);border:1px solid var(--line)}
 .note .del{float:right;background:none;color:var(--muted);padding:0 4px;margin:0}
 .pill{font-size:12px;color:var(--muted);text-transform:none;letter-spacing:0}
 dialog{background:var(--page);color:var(--ink);border:1px solid var(--line);border-radius:10px;max-width:380px}

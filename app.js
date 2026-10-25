@@ -23,6 +23,7 @@ function localStore() {
     async list(grp, book, chapters) { return read().filter((n) => n.book === book && chapters.includes(n.chapter)); },
     async listAll() { return read(); },
     async add(n) { save("notes", JSON.stringify([...read(), { ...n, id: crypto.randomUUID(), created_at: new Date().toISOString(), mine: true }])); fire(); },
+    async update(id, body) { save("notes", JSON.stringify(read().map((n) => (n.id === id ? { ...n, body } : n)))); fire(); },
     async remove(id) { save("notes", JSON.stringify(read().filter((n) => n.id !== id))); fire(); },
     subscribe(f) { listeners.push(f); },
   };
@@ -53,6 +54,11 @@ async function remoteStore() {
       return data.map((n) => ({ ...n, mine: n.owner === uid }));
     },
     async add(n) { const { error } = await sb.from("notes").insert({ ...n, owner: uid }); if (error) throw error; },
+    async update(id, body) {
+      const { data, error } = await sb.from("notes").update({ body }).eq("id", id).select();
+      if (error) throw error;
+      if (!data.length) throw new Error("Editing is not turned on yet. Run the update policy in supabase/schema.sql.");
+    },
     async remove(id) { const { error } = await sb.from("notes").delete().eq("id", id); if (error) throw error; },
     subscribe(f) { listeners.push(f); },
   };
@@ -272,7 +278,7 @@ function fillVerseSelect() {
 
 function noteHTML(n) {
   const q = n.kind === "question";
-  return `<div class="note${q ? " q" : ""}"><b>${q ? '<span class="qt">Question</span> ' : ""}${esc(n.author)}${n.mine ? `<button class="del" data-id="${esc(n.id)}" title="Delete" aria-label="Delete">✕</button>` : ""}</b>${esc(n.body)}</div>`;
+  return `<div class="note${q ? " q" : ""}"><b>${q ? '<span class="qt">Question</span> ' : ""}${esc(n.author)}${n.mine ? `<button class="del" data-id="${esc(n.id)}" title="Delete" aria-label="Delete">✕</button><button class="edit" data-id="${esc(n.id)}" title="Edit" aria-label="Edit">✎</button>` : ""}</b><span class="nb">${esc(n.body)}</span></div>`;
 }
 
 async function refreshNotes() {
@@ -500,8 +506,25 @@ async function onDelete(e) {
   const b = e.target.closest(".del");
   if (b && confirm("Delete this?")) { await state.store.remove(b.dataset.id); refreshNotes(); }
 }
-$("notes").addEventListener("click", onDelete);
-$("gq").addEventListener("click", onDelete);
+async function onEdit(e) {
+  const b = e.target.closest(".edit, .esave, .ecancel");
+  if (!b) return;
+  const note = b.closest(".note");
+  if (b.classList.contains("ecancel")) return refreshNotes();
+  if (b.classList.contains("esave")) {
+    const body = note.querySelector("textarea").value.trim();
+    if (!body) return;
+    try { await state.store.update(b.dataset.id, body); refreshNotes(); }
+    catch (err) { alert("Could not save: " + err.message); }
+    return;
+  }
+  const old = note.querySelector(".nb").textContent;
+  note.querySelector(".nb").innerHTML =
+    `<textarea class="eta" maxlength="2000"></textarea><span class="erow"><button class="esave" data-id="${esc(b.dataset.id)}">Save</button><button class="ecancel ghost2">Cancel</button></span>`;
+  const ta = note.querySelector("textarea");
+  ta.value = old; ta.focus();
+}
+for (const id of ["notes", "gq"]) { $(id).addEventListener("click", onDelete); $(id).addEventListener("click", onEdit); }
 
 document.querySelectorAll('input[name="kind"]').forEach((r) => r.addEventListener("change", () => {
   const q = kindNow() === "question";

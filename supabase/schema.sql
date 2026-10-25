@@ -20,6 +20,7 @@ alter table public.notes enable row level security;
 -- Anyone signed in (anonymously) can read notes; the group code is the filter.
 create policy "read notes"   on public.notes for select to authenticated using (true);
 create policy "add notes"    on public.notes for insert to authenticated with check (owner = auth.uid());
+create policy "edit own"     on public.notes for update to authenticated using (owner = auth.uid()) with check (owner = auth.uid());
 create policy "delete own"   on public.notes for delete to authenticated using (owner = auth.uid());
 
 alter publication supabase_realtime add table public.notes;

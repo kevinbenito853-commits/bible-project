@@ -18,7 +18,10 @@
     </select>
     <button>Go</button>
   </form>
-  <button id="who" class="ghost" type="button"></button>
+  <div class="bar-right">
+    <button id="rep" class="ghost" type="button">Print report</button>
+    <button id="who" class="ghost" type="button"></button>
+  </div>
 </header>
 
 <main class="book"><div class="spread">
@@ -27,11 +30,11 @@
     <h1 id="title"></h1>
     <div class="sub" id="sub"></div>
     <div id="text"></div>
-    <div class="hint">Tap any dotted name to open its study card. Select a verse or part of one to copy it or read commentary.</div>
+    <div class="hint">Tap a <span class="e-sample">dotted name</span> or a <span class="w-sample">dashed word</span> to open it right under the verse. Tap a verse number to add a note or question. Select text to copy it or read commentary.</div>
   </section>
   <section class="pg right">
-    <div class="run"><span>Study card</span><span id="mode" class="pill"></span></div>
-    <div id="card" class="card"><div class="empty">Select a name in the text to see who or what it is, key dates, sources and related verses.</div></div>
+    <div class="run"><span>Questions &amp; notes</span><span id="mode" class="pill"></span></div>
+
     <div id="commWrap" hidden>
       <h3>Commentary</h3>
       <div id="quote" class="quote"></div>
@@ -49,15 +52,49 @@
       </div>
       <div id="comm"></div>
     </div>
-    <h3>Notes <span class="pill" id="grp"></span></h3>
+
+    <h3>Questions on this passage <span class="pill" id="grp"></span></h3>
+    <div id="gq"></div>
+    <textarea id="gqt" placeholder="Ask a question about the whole passage…" aria-label="General question"></textarea>
+    <button id="gqa">Ask</button>
+
+    <h3>Verse by verse</h3>
     <div id="notes"></div>
-    <select id="vs" aria-label="Verse"></select>
-    <textarea id="nt" placeholder="Write a note for your study group…"></textarea>
-    <button id="add">Add note</button>
+    <div class="composer">
+      <select id="vs" aria-label="Verse"></select>
+      <div class="kinds" role="radiogroup" aria-label="Type">
+        <label><input type="radio" name="kind" value="note" checked> Note</label>
+        <label><input type="radio" name="kind" value="question"> Question</label>
+      </div>
+      <textarea id="nt" placeholder="Write a note for your study group…" aria-label="Note or question"></textarea>
+      <button id="add">Add note</button>
+    </div>
   </section>
 </div></main>
 
 <div id="pop" hidden><button id="popComm" type="button">Commentary</button><button id="popCopy" type="button">Copy</button></div>
+
+<section id="report" aria-label="Study report">
+  <div class="rtools">
+    <button type="button" id="rBack" class="ghost">← Back</button>
+    <select id="rScope" aria-label="What to include">
+      <option value="passage">This passage</option>
+      <option value="all">All passages</option>
+    </select>
+    <select id="rWho" aria-label="Whose">
+      <option value="all">Everyone’s</option>
+      <option value="mine">Just mine</option>
+    </select>
+    <button type="button" id="rCopy">Copy text</button>
+    <button type="button" id="rPrint">Print / Save PDF</button>
+  </div>
+  <p class="rhelp">Drag the ⠿ handle (or use ▲ ▼) to put things in order. Untick anything you want left out. Only the numbered list prints.</p>
+  <div class="rpaper">
+    <h1 id="rTitle">Study report</h1>
+    <p class="rsub" id="rSub"></p>
+    <ol id="rList"></ol>
+  </div>
+</section>
 
 <dialog id="dlg">
   <form method="dialog" id="settings">

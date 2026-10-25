@@ -323,13 +323,15 @@ async function turnChapter(delta) {
   state.turning = true;
   const prev = state.reference;
   $("ref").value = `${state.book} ${target}`;
-  const ok = await loadPassage($("ref").value, state.tr);
-  if (ok === false) {
-    await loadPassage(prev, state.tr);
-    $("ref").value = prev;
-    toast(delta > 0 ? "That's the last chapter." : "That's the first chapter.");
-  } else if (ok) window.scrollTo(0, 0);
-  state.turning = false;
+  toast(`Opening ${$("ref").value}…`);
+  try {
+    const ok = await loadPassage($("ref").value, state.tr);
+    if (ok === false) {
+      await loadPassage(prev, state.tr);
+      $("ref").value = prev;
+      toast(delta > 0 ? "That's the last chapter." : "That's the first chapter.");
+    } else if (ok) { $("toast").hidden = true; window.scrollTo(0, 0); }
+  } finally { state.turning = false; }
 }
 
 async function copyCurrent() {
@@ -665,21 +667,22 @@ document.addEventListener("keydown", (e) => {
 });
 // swipe left / right on the passage to turn the chapter
 let swipe = null;
-const leftPage = document.querySelector(".pg.left");
-leftPage.addEventListener("touchstart", (e) => {
+const book = document.querySelector(".book");
+book.addEventListener("touchstart", (e) => {
   const t = e.touches[0];
-  swipe = e.touches.length === 1 ? { x: t.clientX, y: t.clientY, at: Date.now() } : null;
+  swipe = e.touches.length === 1 && !e.target.closest("textarea, input, select, .icard, .cm") ? { x: t.clientX, y: t.clientY, at: Date.now() } : null;
 }, { passive: true });
-leftPage.addEventListener("touchend", (e) => {
+book.addEventListener("touchend", (e) => {
   const s = swipe;
   swipe = null;
   if (!s) return;
   const sel = window.getSelection();
-  if (sel && !sel.isCollapsed) return;
+  if (sel && !sel.isCollapsed && sel.toString().trim()) return;
   const t = e.changedTouches[0], dx = t.clientX - s.x, dy = t.clientY - s.y;
-  if (Date.now() - s.at > 800 || Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 1.8) return;
+  if (Date.now() - s.at > 1500 || Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.2) return;
   turnChapter(dx < 0 ? 1 : -1);
 }, { passive: true });
+book.addEventListener("touchcancel", () => { swipe = null; }, { passive: true });
 $("popComm").addEventListener("click", () => { showCommentary(); $("pop").hidden = true; });
 $("popCopy").addEventListener("click", copyCurrent);
 $("copyQ").addEventListener("click", copyCurrent);

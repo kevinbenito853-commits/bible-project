@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Bible Project</title>
-<link rel="stylesheet" href="style.css?v=5">
+<link rel="stylesheet" href="style.css?v=6">
 </head>
 <body>
 <header class="bar">
@@ -33,6 +33,7 @@
     <div class="turn"><button id="prevCh" type="button">‹ Previous chapter</button><button id="nextCh" type="button">Next chapter ›</button></div>
     <div class="hint">Tap a <span class="e-sample">dotted name</span> or a <span class="w-sample">dashed word</span> to open it right under the verse. Tap a verse number to add a note or question. Select text to highlight, copy it or read commentary. Swipe left or right to change chapter.</div>
   </section>
+  <div class="split" id="split" role="separator" aria-orientation="vertical" aria-label="Drag to resize the verses and the notes" tabindex="0"></div>
   <section class="pg right">
     <div class="run"><span>Questions &amp; notes</span><span id="mode" class="pill"></span></div>
 
@@ -120,6 +121,6 @@
   </form>
 </dialog>
 
-<script type="module" src="app.js?v=5"></script>
+<script type="module" src="app.js?v=6"></script>
 </body>
 </html>

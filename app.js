@@ -1,4 +1,4 @@
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js?v=5";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js?v=6";
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -633,8 +633,11 @@ function savePanelOrder(list) {
 function dragTick() {
   if (!drag) return;
   const y = drag.y;
-  if (y < 90) window.scrollBy(0, -12); else if (y > window.innerHeight - 90) window.scrollBy(0, 12);
-  drag.li.style.transform = `translateY(${y - drag.startY + (window.scrollY - drag.startScroll)}px)`;
+  // Notes live in a scrolling pane; the report scrolls the whole page.
+  const sc = drag.pane, top = sc ? sc.getBoundingClientRect().top : 0, bottom = sc ? sc.getBoundingClientRect().bottom : window.innerHeight;
+  const by = y < top + 90 ? -12 : y > bottom - 90 ? 12 : 0;
+  if (sc) sc.scrollTop += by; else window.scrollBy(0, by);
+  drag.li.style.transform = `translateY(${y - drag.startY + (window.scrollY - drag.startScroll) + (sc ? sc.scrollTop - drag.startPane : 0)}px)`;
   const t = dropTarget(y);
   dragRows(drag.list).forEach((x) => x.classList.toggle("over", x === t));
   drag.list.classList.toggle("over-end", !t);
@@ -667,6 +670,38 @@ function reportText() {
   return `${lines.join("\n").trim()}\n`;
 }
 
+/* ---------- draggable divider between the verses and the notes ---------- */
+
+const split = $("split");
+const spread = split.parentElement;
+let splitFrac = Math.min(0.8, Math.max(0.2, parseFloat(load("split", "0.5")) || 0.5));
+const stacked = () => matchMedia("(max-width:720px)").matches; // phone: verses on top, notes below
+function setSplit(f) {
+  splitFrac = Math.min(0.8, Math.max(0.2, f));
+  for (const [k, v] of [["--lw", splitFrac], ["--rw", 1 - splitFrac], ["--lh", splitFrac], ["--rh", 1 - splitFrac]]) spread.style.setProperty(k, `${v}fr`);
+}
+setSplit(splitFrac);
+split.addEventListener("pointerdown", (e) => {
+  e.preventDefault();
+  split.setPointerCapture(e.pointerId);
+  split.classList.add("on");
+});
+split.addEventListener("pointermove", (e) => {
+  if (!split.hasPointerCapture(e.pointerId)) return;
+  const r = spread.getBoundingClientRect();
+  setSplit(stacked() ? (e.clientY - r.top) / r.height : (e.clientX - r.left) / r.width);
+});
+const endSplit = () => { split.classList.remove("on"); save("split", String(splitFrac)); };
+split.addEventListener("pointerup", endSplit);
+split.addEventListener("pointercancel", endSplit);
+split.addEventListener("keydown", (e) => {
+  const back = stacked() ? "ArrowUp" : "ArrowLeft", fwd = stacked() ? "ArrowDown" : "ArrowRight";
+  if (e.key !== back && e.key !== fwd) return;
+  e.preventDefault();
+  setSplit(splitFrac + (e.key === fwd ? 0.05 : -0.05));
+  save("split", String(splitFrac));
+});
+
 /* ---------- wiring ---------- */
 
 $("rep").addEventListener("click", async () => { document.body.classList.add("reporting"); window.scrollTo(0, 0); await buildReport(); });
@@ -698,12 +733,13 @@ for (const id of ["rList", "notes", "gq"]) $(id).addEventListener("pointerdown",
   if (!h) return;
   e.preventDefault();
   const li = h.closest(".ri, .note");
-  drag = { li, list: li.parentElement, y: e.clientY, startY: e.clientY, startScroll: window.scrollY, raf: 0 };
+  const pane = li.closest(".pg");
+  drag = { li, list: li.parentElement, pane, y: e.clientY, startY: e.clientY, startScroll: window.scrollY, startPane: pane ? pane.scrollTop : 0, raf: 0 };
   li.classList.add("drag");
   drag.raf = requestAnimationFrame(dragTick);
 });
 document.addEventListener("selectionchange", () => { clearTimeout(updatePop.t); updatePop.t = setTimeout(updatePop, 150); });
-document.addEventListener("scroll", () => { $("pop").hidden = true; }, { passive: true });
+document.addEventListener("scroll", () => { $("pop").hidden = true; }, { passive: true, capture: true });
 // keep the selection alive when the buttons are pressed
 $("pop").addEventListener("mousedown", (e) => e.preventDefault());
 $("popHl").addEventListener("click", highlightCurrent);

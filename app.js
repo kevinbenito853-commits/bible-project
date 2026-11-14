@@ -23,7 +23,7 @@ function localStore() {
     async list(grp, book, chapters) { return read().filter((n) => n.book === book && chapters.includes(n.chapter)); },
     async listAll() { return read(); },
     async add(n) { save("notes", JSON.stringify([...read(), { ...n, id: crypto.randomUUID(), created_at: new Date().toISOString(), mine: true }])); fire(); },
-    async update(id, body) { save("notes", JSON.stringify(read().map((n) => (n.id === id ? { ...n, body } : n)))); fire(); },
+    async update(id, fields) { save("notes", JSON.stringify(read().map((n) => (n.id === id ? { ...n, ...fields } : n)))); fire(); },
     async remove(id) { save("notes", JSON.stringify(read().filter((n) => n.id !== id))); fire(); },
     subscribe(f) { listeners.push(f); },
   };
@@ -54,8 +54,8 @@ async function remoteStore() {
       return data.map((n) => ({ ...n, mine: n.owner === uid }));
     },
     async add(n) { const { error } = await sb.from("notes").insert({ ...n, owner: uid }); if (error) throw error; },
-    async update(id, body) {
-      const { data, error } = await sb.from("notes").update({ body }).eq("id", id).select();
+    async update(id, fields) {
+      const { data, error } = await sb.from("notes").update(fields).eq("id", id).select();
       if (error) throw error;
       if (!data.length) throw new Error("Editing is not turned on yet. Run the update policy in supabase/schema.sql.");
     },
@@ -452,7 +452,7 @@ function fillVerseSelect() {
 
 function noteHTML(n) {
   const q = n.kind === "question";
-  return `<div class="note${q ? " q" : ""}"><b>${q ? '<span class="qt">Question</span> ' : ""}${esc(n.author)}${n.mine ? `<button class="del" data-id="${esc(n.id)}" title="Delete" aria-label="Delete">✕</button><button class="edit" data-id="${esc(n.id)}" title="Edit" aria-label="Edit">✎</button>` : ""}</b><span class="nb">${esc(n.body)}</span>${q ? `<button type="button" class="cbtn" data-kind="q" data-ch="${esc(n.chapter)}" data-v="${esc(n.verse)}">Comments</button>` : ""}</div>`;
+  return `<div class="note${q ? " q" : ""}"><b>${q ? '<span class="qt">Question</span> ' : ""}${esc(n.author)}${n.mine ? `<button class="del" data-id="${esc(n.id)}" title="Delete" aria-label="Delete">✕</button><button class="edit" data-id="${esc(n.id)}" data-ch="${esc(n.chapter)}" data-v="${esc(n.verse)}" data-kind="${q ? "question" : "note"}" title="Edit" aria-label="Edit">✎</button>` : ""}</b><span class="nb">${esc(n.body)}</span>${q ? `<button type="button" class="cbtn" data-kind="q" data-ch="${esc(n.chapter)}" data-v="${esc(n.verse)}">Comments</button>` : ""}</div>`;
 }
 
 async function refreshNotes() {
@@ -722,15 +722,24 @@ async function onEdit(e) {
   if (b.classList.contains("esave")) {
     const body = note.querySelector("textarea").value.trim();
     if (!body) return;
-    try { await state.store.update(b.dataset.id, body); refreshNotes(); }
+    const kind = note.querySelector(".ek").value;
+    const [chapter, verse] = note.querySelector(".ev").value.split(":").map(Number);
+    const fields = { body, kind, chapter, verse, passage: state.reference };
+    try { await state.store.update(b.dataset.id, fields); refreshNotes(); }
     catch (err) { alert("Could not save: " + err.message); }
     return;
   }
   const old = note.querySelector(".nb").textContent;
+  const cur = `${b.dataset.ch}:${b.dataset.v}`;
+  const opts = [`<option value="${state.chapters[0]}:0">Whole passage</option>`]
+    .concat(state.verses.map((v) => `<option value="${v.chapter}:${v.verse}">${esc(state.book)} ${v.chapter}:${v.verse}</option>`)).join("");
   note.querySelector(".nb").innerHTML =
+    `<span class="erow"><select class="ev" aria-label="Verse">${opts}</select><select class="ek" aria-label="Note or question"><option value="note">Note</option><option value="question">Question</option></select></span>` +
     `<textarea class="eta" maxlength="2000"></textarea><span class="erow"><button class="esave" data-id="${esc(b.dataset.id)}">Save</button><button class="ecancel ghost2">Cancel</button></span>`;
   const ta = note.querySelector("textarea");
   ta.value = old; ta.focus();
+  note.querySelector(".ev").value = cur;
+  note.querySelector(".ek").value = b.dataset.kind;
 }
 document.addEventListener("click", (e) => {
   const b = e.target.closest(".cbtn");

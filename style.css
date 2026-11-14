@@ -126,6 +126,12 @@ body.reporting #report{display:block}
 .ri.drag{z-index:5;background:var(--card);box-shadow:0 6px 20px rgba(0,0,0,.35);border-radius:6px;cursor:grabbing}
 .ri.over{box-shadow:0 -3px 0 var(--gold)}
 #rList.over-end .ri:last-child{box-shadow:0 3px 0 var(--gold)}
+.note{position:relative}
+.note .rh{display:inline-block;font-size:16px;padding:0 2px}
+.nref{color:var(--gold);letter-spacing:.06em;text-transform:uppercase}
+.note.drag{z-index:5;box-shadow:0 6px 20px rgba(0,0,0,.35);cursor:grabbing}
+.note.over{box-shadow:0 -3px 0 var(--gold)}
+#notes.over-end .note:last-child,#gq.over-end .note:last-child{box-shadow:0 3px 0 var(--gold)}
 .qt.n{color:var(--gold);border-color:var(--gold)}
 @media(max-width:520px){.ri{grid-template-columns:auto auto auto minmax(0,1fr)}.rbtns{grid-column:4}.rpaper{padding:18px}}
 @media print{

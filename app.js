@@ -1,4 +1,4 @@
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js?v=3";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js?v=4";
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -8,7 +8,7 @@ const save = (k, v) => { try { localStorage.setItem(k, v); } catch { /* private 
 
 const state = {
   verses: [], chapters: [], book: "", reference: "", loadId: 0,
-  entities: [], words: [], store: null,
+  entities: [], words: [], store: null, panelIds: [],
   name: load("name", ""), group: load("group", ""),
 };
 
@@ -450,9 +450,9 @@ function fillVerseSelect() {
   $("vs").innerHTML = state.verses.map((v) => `<option value="${v.chapter}:${v.verse}">${esc(state.book)} ${v.chapter}:${v.verse}</option>`).join("");
 }
 
-function noteHTML(n) {
+function noteHTML(n, ref = "", anchor = "") {
   const q = n.kind === "question";
-  return `<div class="note${q ? " q" : ""}"><b>${q ? '<span class="qt">Question</span> ' : ""}${esc(n.author)}${n.mine ? `<button class="del" data-id="${esc(n.id)}" title="Delete" aria-label="Delete">✕</button><button class="edit" data-id="${esc(n.id)}" data-ch="${esc(n.chapter)}" data-v="${esc(n.verse)}" data-kind="${q ? "question" : "note"}" title="Edit" aria-label="Edit">✎</button>` : ""}</b><span class="nb">${esc(n.body)}</span>${q ? `<button type="button" class="cbtn" data-kind="q" data-ch="${esc(n.chapter)}" data-v="${esc(n.verse)}">Comments</button>` : ""}</div>`;
+  return `<div class="note${q ? " q" : ""}" data-id="${esc(n.id)}"${anchor}><b><span class="rh" title="Drag to reorder" aria-hidden="true">⠿</span> ${q ? '<span class="qt">Question</span> ' : ""}${ref ? `<span class="nref">${esc(ref)}</span> · ` : ""}${esc(n.author)}${n.mine ? `<button class="del" data-id="${esc(n.id)}" title="Delete" aria-label="Delete">✕</button>` : ""}<button class="edit" data-id="${esc(n.id)}" data-ch="${esc(n.chapter)}" data-v="${esc(n.verse)}" data-kind="${q ? "question" : "note"}" title="Edit" aria-label="Edit">✎</button></b><span class="nb">${esc(n.body)}</span>${q ? `<button type="button" class="cbtn" data-kind="q" data-ch="${esc(n.chapter)}" data-v="${esc(n.verse)}">Comments</button>` : ""}</div>`;
 }
 
 async function refreshNotes() {
@@ -461,15 +461,25 @@ async function refreshNotes() {
   try {
     const all = await state.store.list(state.group, state.book, state.chapters);
     if (myId !== state.loadId) return;
-    // General questions belong to the exact passage on screen; everything else is per verse.
-    const general = all.filter((n) => n.verse === 0 && n.passage === state.reference);
-    $("gq").innerHTML = general.length ? general.map(noteHTML).join("") : '<div class="empty">No questions on this passage yet.</div>';
-
     const groups = new Map(state.verses.map((v) => [`${v.chapter}:${v.verse}`, []]));
     all.filter((n) => n.verse > 0).forEach((n) => groups.get(`${n.chapter}:${n.verse}`)?.push(n));
-    const filled = [...groups].filter(([, list]) => list.length);
-    $("notes").innerHTML = filled.length
-      ? filled.map(([cv, list]) => `<div class="vg" id="n-${cv.replace(":", "-")}"><h4>${esc(state.book)} ${esc(cv)}</h4>${list.map(noteHTML).join("")}</div>`).join("")
+    // General questions belong to the exact passage on screen; everything else is per verse.
+    const shown = all.filter((n) => (n.verse === 0 ? n.passage === state.reference : groups.has(`${n.chapter}:${n.verse}`)));
+    const ordered = applyOrder(shown, `p:${state.reference}`);
+    state.panelIds = ordered.map((n) => n.id);
+
+    const general = ordered.filter((n) => n.verse === 0);
+    $("gq").innerHTML = general.length ? general.map((n) => noteHTML(n)).join("") : '<div class="empty">No questions on this passage yet.</div>';
+
+    const seen = new Set();
+    const verseNotes = ordered.filter((n) => n.verse > 0);
+    $("notes").innerHTML = verseNotes.length
+      ? verseNotes.map((n) => {
+        const cv = `${n.chapter}:${n.verse}`;
+        const anchor = seen.has(cv) ? "" : ` id="n-${cv.replace(":", "-")}"`;
+        seen.add(cv);
+        return noteHTML(n, `${state.book} ${cv}`, anchor);
+      }).join("")
       : '<div class="empty">No notes or questions on these verses yet.</div>';
 
     document.querySelectorAll("#text .vb").forEach((b) => {
@@ -504,6 +514,15 @@ const refOf = (n) => (n.verse === 0 ? `Whole passage (${n.passage || `${n.book} 
 const reportKey = () => ($("rScope").value === "all" ? "all" : `p:${state.reference}`);
 const reportRows = () => [...$("rList").querySelectorAll(".ri")];
 
+// Default order: Bible order, with whole-passage questions first. Your own order wins once you move things.
+// The notes panel and the report share this saved order for the passage on screen.
+function applyOrder(list, key) {
+  const byDefault = [...list].sort((a, b) => bookIdx(a.book) - bookIdx(b.book) || a.chapter - b.chapter || a.verse - b.verse || String(a.created_at).localeCompare(String(b.created_at)));
+  const saved = loadJSON("reportOrder", {})[key] || [];
+  const byId = new Map(byDefault.map((n) => [n.id, n]));
+  return [...saved.filter((id) => byId.has(id)).map((id) => byId.get(id)), ...byDefault.filter((n) => !saved.includes(n.id))];
+}
+
 async function reportItems() {
   if (!state.store) return [];
   const everything = $("rScope").value === "all";
@@ -512,11 +531,7 @@ async function reportItems() {
     : (await state.store.list(state.group, state.book, state.chapters))
       .filter((n) => (n.verse === 0 ? n.passage === state.reference : state.verses.some((v) => v.chapter === n.chapter && v.verse === n.verse)));
   if ($("rWho").value === "mine") list = list.filter((n) => n.mine);
-  // Default order: Bible order, with whole-passage questions first. Your own order wins once you move things.
-  const byDefault = [...list].sort((a, b) => bookIdx(a.book) - bookIdx(b.book) || a.chapter - b.chapter || a.verse - b.verse || String(a.created_at).localeCompare(String(b.created_at)));
-  const saved = loadJSON("reportOrder", {})[reportKey()] || [];
-  const byId = new Map(byDefault.map((n) => [n.id, n]));
-  return [...saved.filter((id) => byId.has(id)).map((id) => byId.get(id)), ...byDefault.filter((n) => !saved.includes(n.id))];
+  return applyOrder(list, reportKey());
 }
 
 function rowHTML(n, off) {
@@ -569,9 +584,21 @@ function moveRow(li, dir) {
   li.querySelector(dir < 0 ? "[data-up]" : "[data-down]")?.focus();
 }
 
-// Drag by the ⠿ handle. The row follows your finger and only moves into place when you let go.
+// Drag by the ⠿ handle, in the report or in the notes lists. The row follows your finger and only moves into place when you let go.
 let drag = null;
-const dropTarget = (y) => reportRows().filter((x) => x !== drag.li).find((s) => { const r = s.getBoundingClientRect(); return y < r.top + r.height / 2; }) || null;
+const dragRows = (list) => [...list.children].filter((c) => c.dataset?.id);
+const dropTarget = (y) => dragRows(drag.list).filter((x) => x !== drag.li).find((s) => { const r = s.getBoundingClientRect(); return y < r.top + r.height / 2; }) || null;
+
+// Dropping in the notes lists writes the same saved order the report uses for this passage.
+function savePanelOrder(list) {
+  const ids = dragRows(list).map((c) => c.dataset.id);
+  let i = 0;
+  const next = state.panelIds.map((id) => (ids.includes(id) ? ids[i++] : id));
+  const order = loadJSON("reportOrder", {});
+  order[`p:${state.reference}`] = next;
+  save("reportOrder", JSON.stringify(order));
+  state.panelIds = next;
+}
 
 function dragTick() {
   if (!drag) return;
@@ -579,26 +606,26 @@ function dragTick() {
   if (y < 90) window.scrollBy(0, -12); else if (y > window.innerHeight - 90) window.scrollBy(0, 12);
   drag.li.style.transform = `translateY(${y - drag.startY + (window.scrollY - drag.startScroll)}px)`;
   const t = dropTarget(y);
-  reportRows().forEach((x) => x.classList.toggle("over", x === t));
-  $("rList").classList.toggle("over-end", !t);
+  dragRows(drag.list).forEach((x) => x.classList.toggle("over", x === t));
+  drag.list.classList.toggle("over-end", !t);
   drag.raf = requestAnimationFrame(dragTick);
 }
 
 function endDrag(commit, y) {
   if (!drag) return;
   cancelAnimationFrame(drag.raf);
-  const { li } = drag;
+  const { li, list } = drag;
   const t = commit ? dropTarget(y ?? drag.y) : li;
   li.style.transform = "";
   li.classList.remove("drag");
-  reportRows().forEach((x) => x.classList.remove("over"));
-  $("rList").classList.remove("over-end");
-  if (commit) {
-    if (t) $("rList").insertBefore(li, t); else $("rList").appendChild(li);
-    saveReport();
-    renumber();
-  }
+  dragRows(list).forEach((x) => x.classList.remove("over"));
+  list.classList.remove("over-end");
   drag = null;
+  if (commit) {
+    if (t) list.insertBefore(li, t); else list.appendChild(li);
+    if (list === $("rList")) { saveReport(); renumber(); }
+    else { savePanelOrder(list); refreshNotes(); }
+  }
 }
 
 function reportText() {
@@ -636,12 +663,12 @@ $("rList").addEventListener("click", (e) => {
   if (up) moveRow(up.closest(".ri"), -1);
   if (down) moveRow(down.closest(".ri"), 1);
 });
-$("rList").addEventListener("pointerdown", (e) => {
+for (const id of ["rList", "notes", "gq"]) $(id).addEventListener("pointerdown", (e) => {
   const h = e.target.closest(".rh");
   if (!h) return;
   e.preventDefault();
-  const li = h.closest(".ri");
-  drag = { li, y: e.clientY, startY: e.clientY, startScroll: window.scrollY, raf: 0 };
+  const li = h.closest(".ri, .note");
+  drag = { li, list: li.parentElement, y: e.clientY, startY: e.clientY, startScroll: window.scrollY, raf: 0 };
   li.classList.add("drag");
   drag.raf = requestAnimationFrame(dragTick);
 });
@@ -670,7 +697,7 @@ let swipe = null;
 const book = document.querySelector(".book");
 book.addEventListener("touchstart", (e) => {
   const t = e.touches[0];
-  swipe = e.touches.length === 1 && !e.target.closest("textarea, input, select, .icard, .cm") ? { x: t.clientX, y: t.clientY, at: Date.now() } : null;
+  swipe = e.touches.length === 1 && !e.target.closest("textarea, input, select, .icard, .cm, .rh") ? { x: t.clientX, y: t.clientY, at: Date.now() } : null;
 }, { passive: true });
 book.addEventListener("touchend", (e) => {
   const s = swipe;

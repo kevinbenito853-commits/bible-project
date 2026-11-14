@@ -113,6 +113,10 @@
     <label>Group code <input id="group" maxlength="40" placeholder="e.g. tuesday-night"></label>
     <p class="pill" id="dlgNote"></p>
     <button value="ok">Save</button>
+    <p class="pill">Moving notes between devices: on the device that has them, tap Export. On the device that shows the shared notes, tap Import and pick that file.</p>
+    <button type="button" id="exp" class="ghost2">Export notes from this browser</button>
+    <button type="button" id="imp" class="ghost2">Import notes from a file</button>
+    <input type="file" id="impf" accept="application/json,.json" hidden>
   </form>
 </dialog>
 

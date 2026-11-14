@@ -30,7 +30,7 @@ function localStore() {
 }
 
 async function remoteStore() {
-  const { createClient } = await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm");
+  const { createClient } = await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/+esm");
   const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   let { data: { session } } = await sb.auth.getSession();
   if (!session) ({ data: { session } } = await sb.auth.signInAnonymously());
@@ -789,6 +789,37 @@ $("settings").addEventListener("submit", () => {
   save("group", state.group);
   updateWho();
   refreshNotes();
+});
+
+/* ---------- move notes between devices ---------- */
+$("exp").addEventListener("click", () => {
+  const notes = JSON.parse(load("notes", "[]"));
+  if (!notes.length) return alert("There are no notes saved in this browser.");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(notes, null, 2)], { type: "application/json" }));
+  a.download = "bible-notes.json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+$("imp").addEventListener("click", () => $("impf").click());
+$("impf").addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  e.target.value = "";
+  if (!file) return;
+  if (!state.name) return alert("Set your name first.");
+  try {
+    const notes = JSON.parse(await file.text());
+    if (!Array.isArray(notes) || !notes.length) throw new Error("No notes found in that file.");
+    if (!confirm(`Import ${notes.length} notes into ${SUPABASE_URL ? "the shared group “" + state.group + "”" : "this browser"}? Importing the same file twice makes duplicates.`)) return;
+    for (const n of notes) {
+      await state.store.add({
+        grp: state.group, book: n.book, chapter: n.chapter, verse: n.verse, kind: n.kind || "note",
+        passage: n.passage ?? null, author: n.author || state.name, body: n.body, created_at: n.created_at,
+      });
+    }
+    refreshNotes();
+    alert(`Imported ${notes.length} notes.`);
+  } catch (err) { alert("Could not import: " + err.message); }
 });
 
 const getJSON = (url) => fetch(url).then((r) => { if (!r.ok) throw new Error(`${url}: ${r.status}`); return r.json(); }).catch((e) => { console.warn("Could not load", e); return []; });

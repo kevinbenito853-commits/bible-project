@@ -13,6 +13,10 @@ create table if not exists public.notes (
   created_at  timestamptz not null default now()
 );
 
+-- Note vs question, and which passage a whole-passage question belongs to.
+alter table public.notes add column if not exists kind text not null default 'note';
+alter table public.notes add column if not exists passage text;
+
 create index if not exists notes_lookup on public.notes (grp, book, chapter);
 
 alter table public.notes enable row level security;

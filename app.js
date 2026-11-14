@@ -1,4 +1,4 @@
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js?v=4";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js?v=5";
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -442,6 +442,36 @@ function toggleCard(term) {
   wrap.querySelector(".icard").scrollIntoView({ block: "nearest", behavior: "smooth" });
 }
 
+// A related verse opens as a read-only preview inside the card. You stay on the verse you were reading.
+const refCache = new Map();
+async function previewRef(link) {
+  const card = link.closest(".icard");
+  if (!card) return;
+  card.querySelector(".rprev")?.remove();
+  const box = document.createElement("div");
+  box.className = "rprev";
+  box.innerHTML = `<button type="button" class="x" data-closeprev title="Close" aria-label="Close">✕</button><b>${esc(link.dataset.ref)}</b><div class="rpt">Loading…</div>`;
+  card.appendChild(box);
+  box.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  const key = `${link.dataset.ref}|${state.tr}`;
+  try {
+    if (!refCache.has(key)) {
+      refCache.set(key, fetch(`https://bible-api.com/${encodeURIComponent(link.dataset.ref)}?translation=${state.tr}`).then((r) => {
+        if (!r.ok) throw new Error("Could not find that passage.");
+        return r.json();
+      }));
+    }
+    const data = await refCache.get(key);
+    if (!data.verses?.length) throw new Error("Could not find that passage.");
+    if (!box.isConnected) return;
+    box.querySelector("b").textContent = data.reference;
+    box.querySelector(".rpt").innerHTML = data.verses.map((v) => `<sup>${v.verse}</sup>${esc(v.text.replace(/\s+/g, " ").trim())}`).join(" ");
+  } catch (err) {
+    refCache.delete(key);
+    if (box.isConnected) box.querySelector(".rpt").textContent = err.message;
+  }
+}
+
 /* ---------- notes & questions UI ---------- */
 
 const kindNow = () => document.querySelector('input[name="kind"]:checked').value;
@@ -725,7 +755,9 @@ $("text").addEventListener("click", (e) => {
   if (term) return toggleCard(term);
   if (e.target.closest("[data-close]")) return closeCards();
   const ref = e.target.closest("[data-ref]");
-  if (ref) { e.preventDefault(); $("ref").value = ref.dataset.ref; return loadPassage(ref.dataset.ref, $("tr").value); }
+  if (ref) { e.preventDefault(); return previewRef(ref); }
+  const pv = e.target.closest("[data-closeprev]");
+  if (pv) return pv.closest(".rprev").remove();
   const vn = e.target.closest(".vn");
   if (vn) return pickVerse(vn.dataset.cv);
   const vb = e.target.closest(".vb");
